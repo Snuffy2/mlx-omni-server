@@ -1,8 +1,10 @@
 import argparse
+import importlib
 import os
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .middleware.logging import RequestResponseLoggingMiddleware
 from .routers import api_router
@@ -15,8 +17,6 @@ app.add_middleware(
     RequestResponseLoggingMiddleware,
     # exclude_paths=["/health"]
 )
-
-from fastapi.middleware.cors import CORSMiddleware
 
 app.include_router(api_router)
 
@@ -41,6 +41,18 @@ def build_parser():
         type=int,
         default=1,
         help="Number of workers to use, defaults to 1",
+    )
+    parser.add_argument(
+        "--model-cache-max-size",
+        type=int,
+        default=3,
+        help="Maximum number of MLX models to keep cached, defaults to 3",
+    )
+    parser.add_argument(
+        "--model-cache-ttl-seconds",
+        type=int,
+        default=300,
+        help="Time in seconds before idle MLX models expire from cache, defaults to 300. Set to 0 to disable expiration.",
     )
     parser.add_argument(
         "--log-level",
@@ -97,6 +109,15 @@ def start():
     os.environ["MLX_OMNI_LOG_LEVEL"] = args.log_level
     # Set CORS through environment variable
     os.environ["MLX_OMNI_CORS"] = args.cors_allow_origins
+    # Configure MLX model cache behavior via environment variables so the
+    # global `wrapper_cache` (which reads env on import) will be created with
+    # the requested settings when first imported.
+    os.environ["MLX_OMNI_MODEL_CACHE_MAX_SIZE"] = str(args.model_cache_max_size)
+    os.environ["MLX_OMNI_MODEL_CACHE_TTL_SECONDS"] = str(args.model_cache_ttl_seconds)
+
+    # Import wrapper_cache lazily after env vars are set so its constructor
+    # picks up the CLI configuration. Avoids needing runtime setters.
+    importlib.import_module("mlx_omni_server.chat.mlx.wrapper_cache")
 
     set_logger_level(logger, args.log_level)
     configure_cors_middleware(args.cors_allow_origins)
