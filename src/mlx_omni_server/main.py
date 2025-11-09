@@ -3,6 +3,7 @@ import os
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .middleware.logging import RequestResponseLoggingMiddleware
 from .routers import api_router
@@ -15,8 +16,6 @@ app.add_middleware(
     RequestResponseLoggingMiddleware,
     # exclude_paths=["/health"]
 )
-
-from fastapi.middleware.cors import CORSMiddleware
 
 app.include_router(api_router)
 
