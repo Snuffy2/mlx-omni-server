@@ -3,6 +3,7 @@ import time
 from typing import Callable, Optional
 
 from fastapi import Request, Response
+from starlette.exceptions import ClientDisconnect
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from ..utils.logger import logger
@@ -108,5 +109,5 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
         try:
             body = await request.body()
             return body.decode()
-        except Exception:
+        except (UnicodeDecodeError, RuntimeError, ClientDisconnect):
             return ""
