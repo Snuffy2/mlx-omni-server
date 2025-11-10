@@ -108,5 +108,5 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
         try:
             body = await request.body()
             return body.decode()
-        except Exception:
+        except (UnicodeDecodeError, RuntimeError):
             return ""
