@@ -31,8 +31,6 @@ dependencies = [
     "rich>=13.9.4",
     # chat
     "mlx-lm>=0.28.2",
-    "python-multipart>=0.0.20,<0.0.21", # not used directly?
-    "sse-starlette>=3.0.3,<4", # unused?
     "outlines>=1.0.4,<2",
     # models
     "huggingface-hub>=0.30,<2",
@@ -40,7 +38,6 @@ dependencies = [
     "f5-tts-mlx>=0.2.5,<0.3",
     "mlx-whisper>=0.4.1",
     "mlx-audio>=0.2.4",
-    "numba>=0.57.0", # unused?
     # images
     "mflux>=0.11.0,<0.12",
     # embeddings
@@ -56,15 +53,12 @@ mlx-omni-server = "mlx_omni_server.main:start"
 [dependency-groups]
 dev = [
     "pytest>=8.3.3,<10",
-    "httpx>=0.27.2,<0.30", # not used directly?
     "pre-commit>=4.0.1",
     "black>=25",
     "isort>=6",
     "weave>=0.51.46,<0.60",
     "openai>=1.97.0",
     "anthropic>=0.57.1",
-    # for en_core_web_sm models  # unused?
-    "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
 ]
 
 [tool.hatch.build.targets.sdist]
