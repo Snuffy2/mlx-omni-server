@@ -13,9 +13,10 @@ try:
 except ImportError:
     try:
         from mlx_lm.utils import get_model_path
-        
+
         def resolve_model_path(model_id: str) -> str:
             return get_model_path(model_id)[0]
+
     except ImportError as e:
         raise ImportError(
             "mlx_lm.utils does not expose hf_repo_to_path or get_model_path; "
