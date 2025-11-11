@@ -5,6 +5,7 @@ to avoid expensive model reloading when the same model configuration is used
 across different API endpoints.
 """
 
+import os
 import threading
 import time
 from collections import OrderedDict
@@ -312,4 +313,20 @@ class MLXWrapperCache:
 
 # Global cache instance - shared across all API endpoints
 # Default to 3 models with 5-minute TTL as suggested by user requirements
-wrapper_cache = MLXWrapperCache(max_size=3, ttl_seconds=300)
+def _env_int(name: str, default: int) -> int:
+    try:
+        v = os.environ.get(name)
+        if v is None or v == "":
+            return default
+        return int(v)
+    except ValueError:
+        return default
+
+
+# Global cache instance - shared across all API endpoints
+# Read configuration from environment so callers (e.g. CLI) can control
+# cache behavior before this module is imported.
+wrapper_cache = MLXWrapperCache(
+    max_size=_env_int("MLX_OMNI_MODEL_CACHE_MAX_SIZE", 3),
+    ttl_seconds=_env_int("MLX_OMNI_MODEL_CACHE_TTL_SECONDS", 300),
+)
