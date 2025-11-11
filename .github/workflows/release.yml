@@ -1,0 +1,69 @@
+name: On Release, Update uv.lock and Publish to PyPi
+on:
+  workflow_dispatch:
+  release:
+    types: [published, edited]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  update_uv_lock_and_publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Debug GitHub Variables
+        run: |
+            echo "github.event_name: ${{ github.event_name }}"
+            echo "github.ref_name: ${{ github.ref_name }}"
+            echo "github.event.release.tag_name: ${{ github.event.release.tag_name }}"
+            echo "github.event.repository.default_branch: ${{ github.event.repository.default_branch }}"
+            echo "github.event.release.target_commitish: ${{ github.event.release.target_commitish }}"
+            echo "github.event.release.prerelease: ${{ github.event.release.prerelease }}"
+            echo "github.event.release.draft: ${{ github.event.release.draft }}"
+
+      - name: Install uv (with caching)
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Update uv.lock
+        run: uv lock
+
+      - name: Configure Git
+        if: ${{ github.event_name == 'release' && github.event.release.draft == false }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and Push Updated uv.lock
+        if: ${{ github.event_name == 'release' && github.event.release.draft == false }}
+        run: |
+          git add uv.lock
+          git commit -m "chore: Update uv.lock for ${{ github.event.release.tag_name }} [skip ci]" || echo "No changes to commit"
+          git push
+
+      - name: Update Release
+        if: ${{ github.event_name == 'release' && github.event.release.draft == false }}
+        run: |
+          git tag -f "${{ github.event.release.tag_name }}"
+          git push -f origin "${{ github.event.release.tag_name }}"
+
+      - name: Build
+        run: uv build
+
+      - name: Publish to PyPi
+        if: ${{ github.event_name == 'release' && github.event.release.draft == false && github.event.release.prerelease == false  }}
+        # Setup trusted publishing https://docs.astral.sh/uv/guides/integration/github/#publishing-to-pypi
+        run: uv publish
